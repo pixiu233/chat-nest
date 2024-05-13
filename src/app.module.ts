@@ -6,6 +6,7 @@ import { UserController } from './logical/user/user.controller';
 import { TodosModule } from './todos/todos.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { GuardModule } from './guard/guard.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { GuardModule } from './guard/guard.module';
       autoLoadEntities: true, //如果为true,将自动加载实体 forFeature()方法注册的每个实体都将自动添加到配置对象的实体数组中
     }),
     GuardModule,
+    AuthModule,
   ],
   controllers: [AppController, UserController],
   providers: [AppService, UserService],
