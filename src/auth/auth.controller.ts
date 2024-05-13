@@ -9,63 +9,57 @@ import {
   Param,
   UseGuards,
   Request,
+  UseInterceptors,
+  ClassSerializerInterceptor,
+  Query,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { AuthGuard } from '@nestjs/passport';
-import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { UserDto } from './dto/user.dto';
 import { LocalAuthGuard } from './local-auth.guard';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('auth')
 @ApiTags('auth模块')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
   @Post('signup')
-  // @UseGuards(AuthGuard('jwt'))
   @UsePipes(ValidationPipe) // 使用管道验证
+  @UseInterceptors(ClassSerializerInterceptor)
+  @ApiResponse({ status: 201, type: [UserDto] })
   @ApiOperation({ summary: '注册用户' })
   @ApiParam({ name: 'username', description: '用户名' })
   @ApiParam({ name: 'password', description: '密码' })
   async signup(@Body() signupData: UserDto) {
-    const hashedPassword = await this.authService.hashPassword(
-      signupData.password,
-    );
-    console.log(hashedPassword);
-    return this.authService.signup({ ...signupData, password: hashedPassword });
-  }
-  @Get(':username')
-  async getUserByUsername(@Param('username') username: string) {
-    const user = await this.authService.findByUsername(username);
-    if (!user) {
-      throw new NotFoundException(`User with username ${username} not found`);
-    }
-    return user;
+    return this.authService.signup(signupData);
   }
 
   @ApiOperation({ summary: '登录' })
   @UseGuards(LocalAuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
   @Post('login')
   async login(@Request() req) {
     return req.user;
   }
-  //
-  // @Get()
-  // findAll() {
-  //   return this.authService.findAll();
-  // }
-  //
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   return this.authService.findOne(+id);
-  // }
-  //
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateAuthDto: UpdateAuthDto) {
-  //   return this.authService.update(+id, updateAuthDto);
-  // }
-  //
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.authService.remove(+id);
-  // }
+
+  @ApiOperation({ summary: '获取用户信息' })
+  @ApiBearerAuth() // swagger文档设置token
+  @UseGuards(AuthGuard('jwt'))
+  @Get('getUserInfo')
+  async getUserInfo(@Request() req) {
+    return req.user;
+  }
+  @ApiOperation({ summary: '获取所有用户' })
+  @Get('list')
+  @UseGuards(AuthGuard('jwt'))
+  async getOne() {
+    return await this.authService.getAll();
+  }
 }
