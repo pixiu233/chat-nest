@@ -26,6 +26,11 @@ export class AuthService {
     user.password = signupData.password;
     return this.user.save(user);
   }
+  hashPassword(password: string): Promise<string> {
+    const saltOrRounds = 10; // 哈希轮数，越高越安全但也越慢
+
+    return bcrypt.hash(password, saltOrRounds);
+  }
 
   async validate(username: string, pass: string) {
     const user = await this.user.findOne({ where: { username } });

@@ -26,8 +26,12 @@ export class AuthController {
   @ApiOperation({ summary: '注册用户' })
   @ApiParam({ name: 'username', description: '用户名' })
   @ApiParam({ name: 'password', description: '密码' })
-  signup(@Body() signupData: UserDto) {
-    return this.authService.signup(signupData);
+  async signup(@Body() signupData: UserDto) {
+    const hashedPassword = await this.authService.hashPassword(
+      signupData.password,
+    );
+    console.log(hashedPassword);
+    return this.authService.signup({ ...signupData, password: hashedPassword });
   }
   @Get(':username')
   async getUserByUsername(@Param('username') username: string) {
