@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { Friendship } from './entities/Friendship.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { NV_Users } from '../auth/entities/user.entity';
 
 @Injectable()
@@ -46,10 +46,31 @@ export class FriendService {
       ],
     });
     const friendIds = friendships.flatMap((item) => {
-      console.log(item, userId, item.id == userId);
       return item.id == userId ? [] : [item.id];
     });
     console.log(friendIds);
-    return this.user.findByIds(friendIds);
+    return this.user.find({
+      where: { userId: In(friendIds) }, // 使用In来查询多个ID
+      relations: ['friends'], // 加载'friends'关联
+    });
+  }
+  async findFriendsOfUser(userId: number) {
+    // 查询与给定用户存在双向友谊关系的所有用户
+    const friends = await this.friendshipRepository
+      .createQueryBuilder('friendship')
+      .innerJoinAndSelect('friendship.userA', 'userA')
+      .innerJoinAndSelect('friendship.userB', 'userB')
+
+      .distinct(true)
+      .getMany();
+    const uniqueFriends = Array.from(
+      new Set(
+        friends.map((friendship) =>
+          friendship.userA.userId === userId ? [] : friendship.userB,
+        ),
+      ),
+    );
+
+    return uniqueFriends;
   }
 }

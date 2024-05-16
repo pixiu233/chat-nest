@@ -41,7 +41,7 @@ export class FriendController {
   async get_friend(@Body() createFriendDto) {
     const { userId } = createFriendDto;
     try {
-      const res = await this.friendService.getFriendsForUser(userId);
+      const res = await this.friendService.findFriendsOfUser(userId);
       return res;
     } catch (error) {
       if (error instanceof NotFoundException) {
