@@ -1,4 +1,11 @@
-import { Module } from '@nestjs/common';
+import {
+  CallHandler,
+  ExecutionContext,
+  HttpStatus,
+  Injectable,
+  Module,
+  NestInterceptor,
+} from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserService } from './logical/user/user.service';
@@ -8,6 +15,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { GuardModule } from './guard/guard.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
+import { FriendModule } from './friend/friend.module';
 
 @Module({
   imports: [
@@ -27,9 +35,11 @@ import { ConfigModule } from '@nestjs/config';
       retryDelay: 500, //重试连接数据库间隔
       retryAttempts: 10, //重试连接数据库的次数
       autoLoadEntities: true, //如果为true,将自动加载实体 forFeature()方法注册的每个实体都将自动添加到配置对象的实体数组中
+      logging: true,
     }),
     GuardModule,
     AuthModule,
+    FriendModule,
   ],
   controllers: [AppController, UserController],
   providers: [AppService, UserService],

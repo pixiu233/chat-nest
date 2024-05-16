@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { UserDto } from './dto/user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { NV_Users } from './entities/auth.entity';
+import { NV_Users } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { ApiOperation } from '@nestjs/swagger';
@@ -39,7 +39,7 @@ export class AuthService {
     const { repassword, password, ...res } = await this.user.save(signupData);
     const token = await this.createToken({
       username,
-      id: res.id,
+      userId: res.userId,
     });
     return { ...res, token };
   }
@@ -61,7 +61,7 @@ export class AuthService {
       const match = await bcrypt.compare(pass, user.password);
       if (match) {
         const token = await this.createToken({
-          id: user.id,
+          userId: user.userId,
           username: user.username,
         });
 
@@ -73,7 +73,6 @@ export class AuthService {
       throw new BadRequestException('密码错误.');
     }
     throw new BadRequestException('用户名密码认证失败');
-    return null;
   }
   async findByUsername(username: string) {
     return this.user.findOne({ where: { username } });
