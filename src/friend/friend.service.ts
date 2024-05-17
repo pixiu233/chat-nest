@@ -25,7 +25,9 @@ export class FriendService {
         },
       ],
     });
-    if (existingRequest.length) {
+
+    console.log(existingRequest);
+    if (existingRequest.length > 0) {
       throw new BadRequestException('已经是好友了.');
     }
 
@@ -40,14 +42,18 @@ export class FriendService {
     return this.friendshipRepository.save(newFriendship);
   }
 
-  async findFriendsOfUser(userId: number) {
+  async findFriendsOfUser(userId: number, isConfirmed: boolean) {
     // 找出作为发送者且已确认的关系
-    const res = await this.friendshipRepository
+    return await this.friendshipRepository
       .createQueryBuilder('friendship')
       .leftJoinAndSelect('friendship.receiver', 'receiver')
-      .where('friendship.sender = :userId AND friendship.isConfirmed = true', {
-        userId,
-      })
+      .where(
+        'friendship.sender = :userId AND friendship.isConfirmed = :isConfirmed',
+        {
+          userId,
+          isConfirmed,
+        },
+      )
       .select([
         'friendship.id',
         'friendship.isConfirmed',
@@ -57,8 +63,6 @@ export class FriendService {
         'receiver.mobilePhone',
       ])
       .getMany();
-    console.log(res);
-    return res;
   }
 
   async confirmFriendship(senderId, receiverId) {

@@ -1,14 +1,4 @@
-import {
-  Controller,
-  Post,
-  Body,
-  NotFoundException,
-  HttpException,
-  HttpStatus,
-  BadRequestException,
-  Put,
-  Param,
-} from '@nestjs/common';
+import { Body, Controller, Param, Post, Put } from '@nestjs/common';
 import { FriendService } from './friend.service';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateFriendDto } from './dto/create-friend.dto';
@@ -21,16 +11,20 @@ export class FriendController {
   @ApiOperation({ summary: '添加好友关系' })
   async add_friend(@Body() createFriendDto: CreateFriendDto) {
     const { senderId, receiverId } = createFriendDto;
-    const res = await this.friendService.createFriendship(senderId, receiverId);
-    return res;
+    return await this.friendService.createFriendship(senderId, receiverId);
   }
 
   @Post('get_friend')
   @ApiOperation({ summary: '查找好友关系' })
   async get_friend(@Body() createFriendDto) {
     const { userId } = createFriendDto;
-    const res = await this.friendService.findFriendsOfUser(userId);
-    return res;
+    return await this.friendService.findFriendsOfUser(userId, true);
+  }
+  @Post('get_not_yet_friend')
+  @ApiOperation({ summary: '查找好友关系' })
+  async get_not_yet_friend(@Body() createFriendDto) {
+    const { userId } = createFriendDto;
+    return await this.friendService.findFriendsOfUser(userId, false);
   }
 
   @ApiOperation({ summary: 'Confirm a friend request' })
