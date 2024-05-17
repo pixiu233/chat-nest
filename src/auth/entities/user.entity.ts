@@ -26,9 +26,9 @@ export class NV_Users {
   avatar: string;
   @Column()
   mobilePhone: number;
-  @OneToMany(() => Friendship, (friendship) => friendship.userA)
+  @OneToMany(() => Friendship, (friendship) => friendship.sender)
   friendshipsAsA: Friendship[];
-  @OneToMany(() => Friendship, (friendship) => friendship.userB)
+  @OneToMany(() => Friendship, (friendship) => friendship.receiver)
   friendshipsAsB: Friendship[];
   @ManyToMany(() => NV_Users, (user) => user.friends)
   @JoinTable()

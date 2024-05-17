@@ -5,9 +5,12 @@ import {
   NotFoundException,
   HttpException,
   HttpStatus,
+  BadRequestException,
+  Put,
+  Param,
 } from '@nestjs/common';
 import { FriendService } from './friend.service';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateFriendDto } from './dto/create-friend.dto';
 
 @Controller('friend')
@@ -17,44 +20,41 @@ export class FriendController {
   @Post('add_friend')
   @ApiOperation({ summary: '添加好友关系' })
   async add_friend(@Body() createFriendDto: CreateFriendDto) {
-    const { userId, friendId } = createFriendDto;
-    try {
-      const res = await this.friendService.createFriendship(userId, friendId);
-      return res;
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        console.log(123);
-        throw new HttpException(
-          'One of the users was not found',
-          HttpStatus.NOT_FOUND,
-        );
-      }
-      throw new HttpException(
-        'Failed to create friendship',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+    const { senderId, receiverId } = createFriendDto;
+    const res = await this.friendService.createFriendship(senderId, receiverId);
+    return res;
   }
 
   @Post('get_friend')
   @ApiOperation({ summary: '查找好友关系' })
   async get_friend(@Body() createFriendDto) {
     const { userId } = createFriendDto;
-    try {
-      const res = await this.friendService.findFriendsOfUser(userId);
-      return res;
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        console.log(123);
-        throw new HttpException(
-          'One of the users was not found',
-          HttpStatus.NOT_FOUND,
-        );
-      }
-      throw new HttpException(
-        'Failed to create friendship',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+    const res = await this.friendService.findFriendsOfUser(userId);
+    return res;
+  }
+
+  @ApiOperation({ summary: 'Confirm a friend request' })
+  // 确认好友请求
+  @Put(':senderId/:receiverId/confirm')
+  async confirmFriendRequest(
+    @Param('senderId') senderId: string,
+    @Param('receiverId') receiverId: string,
+  ) {
+    return await this.friendService.confirmFriendship(senderId, receiverId);
+  }
+
+  @ApiOperation({ summary: 'Reject a friend request' })
+  @ApiResponse({
+    status: 200,
+    description: 'Friend request rejected successfully.',
+  })
+  @ApiResponse({ status: 404, description: 'Friendship request not found.' })
+  // 拒绝好友请求
+  @Put(':senderId/:receiverId/reject')
+  async rejectFriendRequest(
+    @Param('senderId') senderId: string,
+    @Param('receiverId') receiverId: string,
+  ) {
+    return await this.friendService.rejectFriendship(senderId, receiverId);
   }
 }

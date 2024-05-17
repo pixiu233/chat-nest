@@ -9,12 +9,12 @@ export class Friendship {
   @ManyToOne(() => NV_Users, (user) => user.friendshipsAsA, {
     onDelete: 'CASCADE',
   })
-  userA: NV_Users;
+  sender: NV_Users;
 
   @ManyToOne(() => NV_Users, (user) => user.friendshipsAsB, {
     onDelete: 'CASCADE',
   })
-  userB: NV_Users;
+  receiver: NV_Users;
 
   @Column({ default: false })
   isConfirmed: boolean;

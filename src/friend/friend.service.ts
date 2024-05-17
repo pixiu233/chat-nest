@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 
 import { Friendship } from './entities/Friendship.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { NV_Users } from '../auth/entities/user.entity';
 
 @Injectable()
@@ -13,64 +13,91 @@ export class FriendService {
     @InjectRepository(NV_Users) private readonly user: Repository<NV_Users>,
   ) {}
 
-  async createFriendship(userId: number, friendId: number) {
-    const userA = await this.user.findOneOrFail({ where: { userId } });
-    const userB = await this.user.findOneOrFail({
-      where: { userId: friendId },
-    });
+  async createFriendship(senderId, receiverId) {
+    // 检查是否已经是好友或已经发出了未确认的请求
 
-    if (!userA || !userB) {
-      throw new Error('One or both users not found');
-    }
-
-    // 确保关系是双向的
-    // userA.friends.push(userB);
-    // userB.friends.push(userA);
-
-    // 如果使用Friendship实体作为连接表
-    const friendship = this.friendshipRepository.create({
-      userA,
-      userB,
-      isConfirmed: false, // 假设初始时未确认
-    });
-
-    // 注意：你可能需要手动处理双向关系的同步，取决于你的实体定义
-    // await this.user.save([userA, userB]);
-    return await this.friendshipRepository.save(friendship);
-  }
-  async getFriendsForUser(userId: number) {
-    const friendships = await this.friendshipRepository.find({
+    const existingRequest = await this.friendshipRepository.find({
       where: [
-        { userA: { userId }, isConfirmed: false },
-        // { userB: { userId }, isConfirmed: false },
+        {
+          sender: { userId: senderId },
+          isConfirmed: false,
+          receiver: { userId: receiverId },
+        },
       ],
     });
-    const friendIds = friendships.flatMap((item) => {
-      return item.id == userId ? [] : [item.id];
+    if (existingRequest.length) {
+      throw new BadRequestException('已经是好友了.');
+    }
+
+    // 创建新的友谊请求
+    const newFriendship = this.friendshipRepository.create({
+      sender: { userId: senderId },
+      receiver: { userId: receiverId },
+      isConfirmed: false,
     });
-    console.log(friendIds);
-    return this.user.find({
-      where: { userId: In(friendIds) }, // 使用In来查询多个ID
-      relations: ['friends'], // 加载'friends'关联
-    });
+
+    // 保存到数据库
+    return this.friendshipRepository.save(newFriendship);
   }
+
   async findFriendsOfUser(userId: number) {
-    // 查询与给定用户存在双向友谊关系的所有用户
-    const friends = await this.friendshipRepository
+    // 找出作为发送者且已确认的关系
+    const res = await this.friendshipRepository
       .createQueryBuilder('friendship')
-      .innerJoinAndSelect('friendship.userA', 'userA')
-      .innerJoinAndSelect('friendship.userB', 'userB')
-
-      .distinct(true)
+      .leftJoinAndSelect('friendship.receiver', 'receiver')
+      .where('friendship.sender = :userId AND friendship.isConfirmed = true', {
+        userId,
+      })
+      .select([
+        'friendship.id',
+        'friendship.isConfirmed',
+        'receiver.userId',
+        'receiver.username',
+        'receiver.avatar',
+        'receiver.mobilePhone',
+      ])
       .getMany();
-    const uniqueFriends = Array.from(
-      new Set(
-        friends.map((friendship) =>
-          friendship.userA.userId === userId ? [] : friendship.userB,
-        ),
-      ),
-    );
+    console.log(res);
+    return res;
+  }
 
-    return uniqueFriends;
+  async confirmFriendship(senderId, receiverId) {
+    const friendship = await this.friendshipRepository.findOne({
+      where: [
+        {
+          sender: { userId: senderId },
+          receiver: { userId: receiverId },
+          isConfirmed: false,
+        },
+      ],
+    });
+    if (!friendship) {
+      throw new BadRequestException('没有待确认的好友请求.');
+    }
+    friendship.isConfirmed = true;
+
+    // 更新记录，确认好友请求
+    return await this.friendshipRepository.save(friendship);
+    // return this.friendshipRepository.save(friendship);
+  }
+
+  async rejectFriendship(senderId, receiverId) {
+    const friendship = await this.friendshipRepository.findOne({
+      where: [
+        {
+          sender: { userId: senderId },
+          receiver: { userId: receiverId },
+          isConfirmed: false,
+        },
+      ],
+    });
+    console.log(friendship);
+
+    if (!friendship) {
+      throw new BadRequestException('没有待确认的好友请求.');
+    }
+    // 根据需求决定是否删除请求或标记为已拒绝
+    // 这里简单地假设删除请求
+    return await this.friendshipRepository.remove(friendship);
   }
 }
