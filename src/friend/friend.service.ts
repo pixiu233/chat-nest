@@ -14,8 +14,8 @@ export class FriendService {
   ) {}
 
   async createFriendship(senderId, receiverId) {
+    if (!senderId || !receiverId) throw new BadRequestException('请输入id');
     // 检查是否已经是好友或已经发出了未确认的请求
-
     const existingRequest = await this.friendshipRepository.find({
       where: [
         {
@@ -43,6 +43,7 @@ export class FriendService {
   }
 
   async findFriendsOfUser(userId: number, isConfirmed: boolean) {
+    console.log(userId);
     // 找出作为发送者且已确认的关系
     return await this.friendshipRepository
       .createQueryBuilder('friendship')
@@ -85,17 +86,16 @@ export class FriendService {
     // return this.friendshipRepository.save(friendship);
   }
 
-  async rejectFriendship(senderId, receiverId) {
+  async rejectFriendship(senderId, receiverId, isDelete) {
     const friendship = await this.friendshipRepository.findOne({
       where: [
         {
           sender: { userId: senderId },
           receiver: { userId: receiverId },
-          isConfirmed: false,
+          isConfirmed: isDelete,
         },
       ],
     });
-    console.log(friendship);
 
     if (!friendship) {
       throw new BadRequestException('没有待确认的好友请求.');
