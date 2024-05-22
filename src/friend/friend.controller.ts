@@ -1,4 +1,12 @@
-import { Body, Controller, Param, Post, Put, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Param,
+  Post,
+  Put,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { FriendService } from './friend.service';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateFriendDto } from './dto/create-friend.dto';
@@ -11,31 +19,33 @@ export class FriendController {
   constructor(private readonly friendService: FriendService) {}
   @Post('add_friend')
   @ApiOperation({ summary: '添加好友关系' })
-  async add_friend(@Body() createFriendDto: CreateFriendDto) {
-    const { senderId, receiverId } = createFriendDto;
-    return await this.friendService.createFriendship(senderId, receiverId);
+  async add_friend(@Body() createFriendDto: CreateFriendDto, @Request() req) {
+    const userId = req.user.userId;
+    const { receiverId } = createFriendDto;
+    return await this.friendService.createFriendship(userId, receiverId);
   }
   @Post('get_friend')
   @ApiOperation({ summary: '查找好友关系' })
-  async get_friend(@Body() createFriendDto) {
-    const { userId } = createFriendDto;
+  async get_friend(@Request() req) {
+    const userId = req.user.userId;
     return await this.friendService.findFriendsOfUser(userId, true);
   }
   @Post('get_not_yet_friend')
   @ApiOperation({ summary: '查找好友关系' })
-  async get_not_yet_friend(@Body() createFriendDto) {
-    const { userId } = createFriendDto;
+  async get_not_yet_friend(@Request() req) {
+    const { userId } = req.user;
     return await this.friendService.findFriendsOfUser(userId, false);
   }
 
   @ApiOperation({ summary: 'Confirm a friend request' })
   // 确认好友请求
-  @Put(':senderId/:receiverId/confirm')
+  @Put(':receiverId/confirm')
   async confirmFriendRequest(
-    @Param('senderId') senderId: string,
     @Param('receiverId') receiverId: string,
+    @Request() req,
   ) {
-    return await this.friendService.confirmFriendship(senderId, receiverId);
+    const { userId } = req.user;
+    return await this.friendService.confirmFriendship(userId, receiverId);
   }
 
   @ApiOperation({ summary: 'Reject a friend request' })
@@ -45,16 +55,13 @@ export class FriendController {
   })
   @ApiResponse({ status: 404, description: 'Friendship request not found.' })
   // 拒绝好友请求
-  @Put(':senderId/:receiverId/reject')
+  @Put(':receiverId/reject')
   async rejectFriendRequest(
-    @Param('senderId') senderId: string,
     @Param('receiverId') receiverId: string,
+    @Request() req,
   ) {
-    return await this.friendService.rejectFriendship(
-      senderId,
-      receiverId,
-      false,
-    );
+    const { userId } = req.user;
+    return await this.friendService.rejectFriendship(userId, receiverId, false);
   }
 
   @ApiOperation({ summary: 'Delete a friend request' })
@@ -64,15 +71,12 @@ export class FriendController {
   })
   @ApiResponse({ status: 404, description: 'Friendship request not found.' })
   // 拒绝好友请求
-  @Put(':senderId/:receiverId/delete')
+  @Put(':receiverId/delete')
   async deleteFriendRequest(
-    @Param('senderId') senderId: string,
     @Param('receiverId') receiverId: string,
+    @Request() req,
   ) {
-    return await this.friendService.rejectFriendship(
-      senderId,
-      receiverId,
-      true,
-    );
+    const { userId } = req.user;
+    return await this.friendService.rejectFriendship(userId, receiverId, true);
   }
 }

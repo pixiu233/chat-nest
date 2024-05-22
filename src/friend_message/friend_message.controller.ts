@@ -16,7 +16,6 @@ export class FriendMessageController {
   // 拒绝好友请求
   @Get('get_friend_message')
   async get_friend_message(@Request() req) {
-    console.log(req, 'cccccc');
     const { senderId, receiverId, current, pageSize } = req.query;
     return await this.friendMessageService.getFriendMessages(
       senderId,
