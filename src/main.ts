@@ -69,6 +69,6 @@ async function bootstrap() {
     origin: 'http://localhost:8080', // 只有来自 <http://example.com> 的请求才被允许
   });
 
-  await app.listen(8001);
+  await app.listen(3000);
 }
 bootstrap();
