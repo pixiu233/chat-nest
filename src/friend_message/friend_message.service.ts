@@ -35,6 +35,7 @@ export class FriendMessageService {
       .skip(current)
       .take(pageSize)
       .getMany();
+    console.log(messages);
     return messages;
   }
 }

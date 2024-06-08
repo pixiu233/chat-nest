@@ -1,10 +1,19 @@
-import { Body, Controller, Get, Post, Put, Request } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { FriendMessageService } from './friend_message.service';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { query } from 'express';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('friend_message')
 @ApiTags('好友聊天记录模块')
+@UseGuards(AuthGuard('jwt'))
 export class FriendMessageController {
   constructor(private readonly friendMessageService: FriendMessageService) {}
   @ApiOperation({ summary: '查找好友聊天记录' })
@@ -16,9 +25,10 @@ export class FriendMessageController {
   // 拒绝好友请求
   @Get('get_friend_message')
   async get_friend_message(@Request() req) {
-    const { senderId, receiverId, current, pageSize } = req.query;
+    const { receiverId, current, pageSize } = req.query;
+    const userId = req.user.userId;
     return await this.friendMessageService.getFriendMessages(
-      senderId,
+      userId,
       receiverId,
       current,
       pageSize,

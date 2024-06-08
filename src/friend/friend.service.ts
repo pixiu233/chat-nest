@@ -26,7 +26,7 @@ export class FriendService {
       ],
     });
 
-    console.log(existingRequest);
+    console.log(existingRequest, 'ccccc');
     if (existingRequest.length > 0) {
       throw new BadRequestException('已经是好友了.');
     }
@@ -43,7 +43,6 @@ export class FriendService {
   }
 
   async findFriendsOfUser(userId: number, isConfirmed: boolean) {
-    console.log(userId);
     // 找出作为发送者且已确认的关系
     return await this.friendshipRepository
       .createQueryBuilder('friendship')
