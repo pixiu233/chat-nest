@@ -4,19 +4,15 @@ import {
   Body,
   UsePipes,
   ValidationPipe,
-  NotFoundException,
   Get,
-  Param,
   UseGuards,
   Request,
   UseInterceptors,
   ClassSerializerInterceptor,
-  Query,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import {
   ApiBearerAuth,
-  ApiOkResponse,
   ApiOperation,
   ApiParam,
   ApiResponse,
@@ -56,9 +52,9 @@ export class AuthController {
   async getUserInfo(@Request() req) {
     return req.user;
   }
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: '获取所有用户' })
   @Get('list')
-  @UseGuards(AuthGuard('jwt'))
   async getOne() {
     return await this.authService.getAll();
   }

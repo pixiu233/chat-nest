@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   Param,
   Post,
   Put,
@@ -31,7 +32,7 @@ export class FriendController {
     return await this.friendService.findFriendsOfUser(userId, true);
   }
   @Post('get_not_yet_friend')
-  @ApiOperation({ summary: '查找好友关系' })
+  @ApiOperation({ summary: '查找还未好友关系' })
   async get_not_yet_friend(@Request() req) {
     const { userId } = req.user;
     return await this.friendService.findFriendsOfUser(userId, false);
@@ -78,5 +79,13 @@ export class FriendController {
   ) {
     const { userId } = req.user;
     return await this.friendService.rejectFriendship(userId, receiverId, true);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: '获取所有没有建立关系的用户' })
+  @Get('list_without_friends')
+  async getF(@Request() req) {
+    const { userId } = req.user;
+    return await this.friendService.getAllWithout(userId);
   }
 }

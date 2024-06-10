@@ -26,7 +26,6 @@ export class FriendService {
       ],
     });
 
-    console.log(existingRequest, 'ccccc');
     if (existingRequest.length > 0) {
       throw new BadRequestException('已经是好友了.');
     }
@@ -47,13 +46,9 @@ export class FriendService {
     return await this.friendshipRepository
       .createQueryBuilder('friendship')
       .leftJoinAndSelect('friendship.receiver', 'receiver')
-      .where(
-        'friendship.sender = :userId AND friendship.isConfirmed = :isConfirmed',
-        {
-          userId,
-          isConfirmed,
-        },
-      )
+      .where('friendship.sender = :userId ', {
+        userId,
+      })
       .select([
         'friendship.id',
         'friendship.isConfirmed',
@@ -61,6 +56,7 @@ export class FriendService {
         'receiver.username',
         'receiver.avatar',
         'receiver.mobilePhone',
+        'receiver.createTime',
       ])
       .getMany();
   }
@@ -91,7 +87,6 @@ export class FriendService {
         {
           sender: { userId: senderId },
           receiver: { userId: receiverId },
-          isConfirmed: isDelete,
         },
       ],
     });
@@ -102,5 +97,49 @@ export class FriendService {
     // 根据需求决定是否删除请求或标记为已拒绝
     // 这里简单地假设删除请求
     return await this.friendshipRepository.remove(friendship);
+  }
+
+  async getAllWithout(userId: string) {
+    const friendIdsRaw = await this.friendshipRepository
+      .createQueryBuilder('friendship')
+      .leftJoinAndSelect('friendship.receiver', 'receiver')
+      .where('friendship.sender = :userId ', {
+        userId,
+      })
+      .getMany();
+    console.log(friendIdsRaw);
+
+    const friendsIds = friendIdsRaw.map((row) => row.receiver.userId);
+    console.log(
+      friendsIds,
+      'friendsIdsfriendsIdsfriendsIdsfriendsIdsfriendsIdsfriendsIdsfriendsIds',
+    );
+    if (friendsIds.length === 0) {
+      return await this.user
+        .createQueryBuilder('user')
+        .andWhere('user.userId != :userId', { userId })
+        .select([
+          'user.userId',
+          'user.username',
+          'user.avatar',
+          'user.mobilePhone',
+          'user.createTime',
+        ])
+        .getMany();
+    }
+    const nonFriends = await this.user
+      .createQueryBuilder('user')
+      .where('user.userId NOT IN (:...friendsIds)', { friendsIds })
+      .andWhere('user.userId != :userId', { userId })
+      .select([
+        'user.userId',
+        'user.username',
+        'user.avatar',
+        'user.mobilePhone',
+        'user.createTime',
+      ])
+      .getMany();
+
+    return nonFriends;
   }
 }

@@ -66,7 +66,7 @@ async function bootstrap() {
   app.useGlobalInterceptors(new HttpStatusSuccess()); // 全局拦截器请求成功
   app.useGlobalFilters(new HttpExceptionFilter()); // 全局异常过滤器
   app.enableCors({
-    origin: 'http://localhost:8080', // 只有来自 <http://example.com> 的请求才被允许
+    origin: ['http://localhost:8080', 'http://localhost:54102'],
   });
 
   await app.listen(3000);
